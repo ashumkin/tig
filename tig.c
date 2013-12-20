@@ -135,6 +135,13 @@ mkdate(const struct time *time, enum date date)
 
 DEFINE_ENUM(file_size, FILE_SIZE_ENUM);
 
+#define ICONV_TRANSLIT_ENUM(_) \
+	_(ICONV_TRANSLIT, NO), \
+	_(ICONV_TRANSLIT, YES), \
+	_(ICONV_TRANSLIT, YES_IGNORE)
+
+DEFINE_ENUM(iconv_translit, ICONV_TRANSLIT_ENUM);
+
 static const char *
 mkfilesize(unsigned long size, enum file_size format)
 {
@@ -495,6 +502,7 @@ static unsigned long opt_goto_line	= 0;
 static char opt_head[SIZEOF_REF]	= "";
 static char opt_remote[SIZEOF_REF]	= "";
 static iconv_t opt_iconv_out		= ICONV_NONE;
+static enum iconv_translit opt_iconv_translit	= ICONV_TRANSLIT_NO;
 static char opt_search[SIZEOF_STR]	= "";
 static char opt_cdup[SIZEOF_STR]	= "";
 static char opt_prefix[SIZEOF_STR]	= "";
@@ -1571,6 +1579,9 @@ option_set_command(int argc, const char *argv[])
 
 	if (!strcmp(argv[0], "vertical-split"))
 		return parse_enum(&opt_vertical_split, argv[2], vertical_split_map);
+
+	if (!strcmp(argv[0], "iconv-translit"))
+		return parse_enum(&opt_iconv_translit, argv[2], iconv_translit_map);
 
 	if (!strcmp(argv[0], "tab-size"))
 		return parse_int(&opt_tab_size, argv[2], 1, 1024);
@@ -9333,11 +9344,22 @@ main(int argc, const char *argv[])
 		die("Not a git repository");
 
 	if (codeset && strcmp(codeset, ENCODING_UTF8)) {
-		char translit[SIZEOF_STR];
+		if (opt_iconv_translit != ICONV_TRANSLIT_NO) {
+			char translit[SIZEOF_STR];
+			const char *iconv_translit_str = NULL;
 
-		if (string_format(translit, "%s%s", codeset, ICONV_TRANSLIT))
-			opt_iconv_out = iconv_open(translit, ENCODING_UTF8);
-		else
+			if (opt_iconv_translit == ICONV_TRANSLIT_YES)
+				// append "//TRANSLIT"
+				iconv_translit_str = ICONV_TRANSLIT_STR;
+			else
+				// append "//TRANSLIT//IGNORE"
+				iconv_translit_str = ICONV_TRANSLIT_IGNORE_STR;
+
+			if (string_format(translit, "%s%s", codeset, iconv_translit_str))
+				opt_iconv_out = iconv_open(translit, ENCODING_UTF8);
+		}
+		// if "//TRANSLIT[//IGNORE]" not enabled or could not be used
+		if (opt_iconv_out == ICONV_NONE)
 			opt_iconv_out = iconv_open(codeset, ENCODING_UTF8);
 		if (opt_iconv_out == ICONV_NONE)
 			die("Failed to initialize character set conversion");

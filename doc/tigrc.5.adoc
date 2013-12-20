@@ -160,6 +160,13 @@ The following variables can be set:
 	is ignored when Tig is started in blame mode and given blame options
 	on the command line.
 
+'iconv-translit' (mixed) [ "no" | "yes" | "yes-ignore" | bool]::
+
+	Whether to use transliteration (add "//TRANSLIT[//IGNORE]" to encoding used).
+	"no" - do not use transliteration.
+	"yes" - use transliteration, i.e. add "//TRANSLIT"
+	"yes-ignore" - use transliteration, i.e. add "//TRANSLIT//IGNORE"
+
 'line-graphics' (mixed) [ "ascii" | "default" | "utf-8" | bool]::
 
 	What type of character graphics for line drawing.
