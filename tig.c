@@ -2090,9 +2090,10 @@ draw_chars(struct view *view, enum line_type type, const char *string,
 		string = encoding_iconv(opt_iconv_out, string);
 		if (!string)
 			return VIEW_MAX_LEN(view) <= 0;
+		len = strlen(string);
+	} else {
+		len = utf8_length(&string, skip, &col, max_len, &trimmed, use_tilde, opt_tab_size);
 	}
-
-	len = utf8_length(&string, skip, &col, max_len, &trimmed, use_tilde, opt_tab_size);
 
 	set_view_attr(view, type);
 	if (len > 0) {
